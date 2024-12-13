@@ -395,23 +395,9 @@ class OktaSdkBridge: RCTEventEmitter {
         
         // State Manager returns non expired (fresh) tokens.
         let areTokensValidAndFresh = stateManager.idToken != nil && stateManager.accessToken != nil
-        if !areTokensValidAndFresh {
-            // Attempt to refresh the tokens
-            refreshTokens (promiseResolver: { result in
-                // Safely unwrap the result into a boolean value
-                if let result = result as? [String: Any],
-                let accessToken = result[OktaSdkConstant.ACCESS_TOKEN_KEY] as? String, !accessToken.isEmpty {
-                    // Assuming the presence of a non-empty access token indicates success
-                    promiseResult[OktaSdkConstant.AUTHENTICATED_KEY] = true
-                } else {
-                    promiseResult[OktaSdkConstant.AUTHENTICATED_KEY] = false
-                }
-                promiseResolver(promiseResult)
-            }, promiseRejecter: promiseRejecter)
-        } else {
-            promiseResult[OktaSdkConstant.AUTHENTICATED_KEY] = true
-            promiseResolver(promiseResult)
-        }
+        promiseResult[OktaSdkConstant.AUTHENTICATED_KEY] = areTokensValidAndFresh
+        
+        promiseResolver(promiseResult)
     }
     
     @objc(revokeAccessToken:promiseRejecter:)
