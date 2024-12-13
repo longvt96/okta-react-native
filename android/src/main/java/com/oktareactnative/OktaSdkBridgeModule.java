@@ -368,8 +368,95 @@ public class OktaSdkBridgeModule extends ReactContextBaseJavaModule implements A
             }
             boolean isAccessTokenAvailable = tokens.getAccessToken() != null && !tokens.isAccessTokenExpired();
             boolean isAuthenticated = isAccessTokenAvailable && isIdTokenNotExpired(tokens.getIdToken());
-            params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, isAuthenticated);
-            promise.resolve(params);
+            // If the access token or ID token is expired, try to refresh the tokens
+            if (!isAuthenticated) {
+                 // Tokens are not valid, try refreshing them
+                refreshTokens(new Promise() {
+                    @Override
+                    public void resolve(Object value) {
+                        // After refreshing the tokens, recheck if the access token is available
+                        try {
+                            Tokens newTokens = sessionClient.getTokens();  // Refresh the tokens
+                            if (newTokens != null && newTokens.getAccessToken() != null && !newTokens.isAccessTokenExpired()) {
+                                params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                            } else {
+                                params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                            }
+                            promise.resolve(params);  // Resolve with the final authentication status
+                        } catch (AuthorizationException e) {
+                            params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                            promise.resolve(params); 
+                        }
+                    }
+
+                    @Override
+                    public void reject(String code, String message) {
+                        // Token refresh failed, mark as unauthenticated
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);  // Resolve with the failure status
+                    }
+
+                    @Override
+                    public void reject(String message) {
+                        // Token refresh failed, mark as unauthenticated
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);  // Resolve with the failure status
+                    }
+
+                    @Override
+                    public void reject(String code, String message, Throwable throwable, WritableMap additionalData) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);  // Resolve with the failure status
+                    }
+
+                    @Override
+                    public void reject(String code, String message, WritableMap additionalData) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);  // Resolve with the failure status
+                    }
+
+                    @Override
+                    public void reject(String code, Throwable throwable, WritableMap additionalData) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);  // Resolve with the f
+                    }
+
+                    @Override
+                    public void reject(String code, WritableMap additionalData) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, false);
+                        promise.resolve(params);
+                    }
+
+                    @Override
+                    public void reject(Throwable throwable, WritableMap additionalData) {
+                        // If both tokens are available and valid, the user is authenticated
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                        promise.resolve(params);
+                    }
+
+                    @Override
+                    public void reject(Throwable throwable) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                        promise.resolve(params);
+                    }
+
+                    @Override
+                    public void reject(String code, String message, Throwable throwable) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                        promise.resolve(params);
+                    }
+
+                    @Override
+                    public void reject(String errorCode, Throwable throwable) {
+                        params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                        promise.resolve(params);
+                    }
+                });
+            } else {
+                // If both tokens are available and valid, the user is authenticated
+                params.putBoolean(OktaSdkConstant.AUTHENTICATED_KEY, true);
+                promise.resolve(params);
+            }
         } catch (Exception e) {
             promise.reject(OktaSdkError.OKTA_OIDC_ERROR.getErrorCode(), e.getLocalizedMessage(), e);
         }
