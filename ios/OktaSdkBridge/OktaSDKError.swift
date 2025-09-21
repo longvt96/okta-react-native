@@ -23,6 +23,7 @@ public enum OktaReactNativeError: Error {
     case errorPayload
     case noAccessToken
     case cancelled
+    case saveTokenError
 }
 
 extension OktaReactNativeError: LocalizedError {
@@ -48,6 +49,8 @@ extension OktaReactNativeError: LocalizedError {
             return NSLocalizedString("No access token found", comment: "")
         case .cancelled:
             return NSLocalizedString("User cancelled a session", comment: "")
+        case .saveTokenError:
+            return NSLocalizedString("Failed to save tokens to secure storage", comment: "")
         }
     }
     public var errorCode: String? {
@@ -72,6 +75,8 @@ extension OktaReactNativeError: LocalizedError {
             return "-900"
         case .cancelled:
             return "-1200"
+        case .saveTokenError:
+            return "-1300"
         }
     }
 }
