@@ -10,7 +10,7 @@ prepare_react_native_project!
 
 def shared_pods
   use_react_native!(:hermes_enabled => false)
-  pod 'OktaOidc'
+  pod 'OktaOidc', :git => 'https://github.com/longvt96/okta-oidc-ios', :branch => 'master'
 end
 
 target 'ReactNativeOktaSdkBridge' do
